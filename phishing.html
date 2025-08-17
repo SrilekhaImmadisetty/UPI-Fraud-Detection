@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Phishing Message Detection</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Phishing Message Detection</h1>
+    <form id="phishingForm">
+      <label for="message">Enter Message:</label>
+      <textarea id="message" name="message" rows="4" required></textarea>
+      <button type="submit">Check Message</button>
+    </form>
+    <div id="phishingResult"></div>
+    <div id="alertMessage" style="color: red; font-weight: bold; display: none;"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.getElementById("phishingForm");
+      const messageInput = document.getElementById("message");
+      
+      const resultDiv = document.getElementById("phishingResult");
+      const alertDiv = document.getElementById("alertMessage");
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const message = messageInput.value;
+
+        try {
+          const response = await fetch("http://127.0.0.1:5000/predict", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message })
+          });
+
+          const data = await response.json();
+          resultDiv.innerHTML = `<strong>Prediction:</strong> ${data.prediction}`;
+
+          // Show alert message if it's phishing
+          if (data.prediction.toLowerCase() === "phishing") {
+            alertDiv.innerHTML = "<h1 align='center'>⚠️ Don't click the link</h1>";
+            alertDiv.style.display = "block";
+          } else {
+            alertDiv.style.display = "none";
+          }
+
+        } catch (error) {
+          console.error("Error:", error);
+          resultDiv.innerHTML = `<strong>Error:</strong> Could not get prediction.`;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy-Preserving UPI Fraud Detection Using Homomorphic Encryption</h1>
+        <form id="fraudForm">
+
+            <label for="amount">Transaction Amount:</label>
+            <input type="float" id="amount" name="amount"  title="Only numbers are allowed">
+
+            <label for="time">Transaction Time:</label>
+            <input type="datetime-local" id="time" name="time" required>
+            
+            <label for="location">Location:</label>
+            <input type="text" id="location" name="location" required pattern="[A-Za-z\s]+" title="Only letters and spaces are allowed">
+
+            <label for="device">Device Type:</label>
+            <select id="device" name="device" required>
+                <option value="">Select Device Type</option>
+                <option value="Trusted">Trusted</option>
+                <option value="Untrusted">Untrusted</option>
+            </select>
+            
+            
+            <label for="merchant">Merchant Category:</label>
+            <input type="text" id="merchant" name="merchant" required>
+            
+            <label for="upi">UPI ID:</label>
+            <input type="text" id="upi" name="upi" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z]+$">
+            
+            
+            <label for="freq">Transaction Frequency:</label>
+            <input type="number" id="freq" name="freq" required min="0" step="1">
+                   
+            
+            <label for="freq24">Transaction Frequency (24 hrs):</label>
+            <input type="number" id="freq24" name="freq24" required min="0" step="1" >
+            
+            <label for="freq48">Transaction Frequency (48 hrs):</label>
+            <input type="number" id="freq48" name="freq48" required min="0" step="1" >
+
+            <label for="sinceLast">Time Since Last Transaction (in seconds):</label>
+            <input type="number" id="sinceLast" name="sinceLast" required min="0" step="1" >
+
+            
+            <button type="submit">Check for Fraud</button>
+        </form>
+        <div id="result"></div> <!-- Result will be displayed here -->
+</div>
+<script>
+   
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('fraudForm');
+    const resultDiv = document.getElementById('result');
+
+    // Ensure the event listener is only attached once
+    if (!form.dataset.listenerAttached) {
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        // Disable button to prevent double click
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        const data = {
+          amount: document.getElementById('amount').value,
+          location: document.getElementById('location').value,
+          device_type: document.getElementById('device').value,
+          merchant_category: document.getElementById('merchant').value,
+          upi_id: document.getElementById('upi').value,
+          transaction_frequency: document.getElementById('freq').value,
+          frequency_24hrs: document.getElementById('freq24').value,
+          frequency_48hrs: document.getElementById('freq48').value,
+          time_since_last: document.getElementById('sinceLast').value
+        };
+
+        try {
+          const response = await fetch('http://localhost:5001/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+
+          if (result.error) {
+            resultDiv.innerText = "Error: " + result.error;
+            resultDiv.style.color = 'red';
+          } else if (result.result === "Fraudulent") {
+            resultDiv.innerText = "⚠️ Alert: Fraudulent Transaction Detected!";
+            resultDiv.style.color = 'red';
+          } else {
+            resultDiv.innerText = "✅ Transaction is Safe.";
+            resultDiv.style.color = 'green';
+          }
+
+        } catch (error) {
+          resultDiv.innerText = "Error connecting to backend.";
+          resultDiv.style.color = 'red';
+          console.error(error);
+        } finally {
+          // Re-enable button after request is complete
+          submitButton.disabled = false;
+        }
+      });
+
+      // Mark listener as attached
+      form.dataset.listenerAttached = 'true';
+    }
+  });
+</script>
+
+    </body>
+</html>
+
